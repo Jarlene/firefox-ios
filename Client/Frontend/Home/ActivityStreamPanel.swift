@@ -33,6 +33,10 @@ class ActivityStreamPanel: UITableViewController, HomePanel {
     private let topSitesManager = ASHorizontalScrollCellManager()
 
     var topSites: [Site] = []
+    lazy var longPressRecognizer: UILongPressGestureRecognizer = {
+        return UILongPressGestureRecognizer(target: self, action: #selector(ActivityStreamPanel.longPress(_:)))
+    }()
+
     var history: [Site] = []
 
     init(profile: Profile) {
@@ -314,6 +318,26 @@ extension ActivityStreamPanel {
         let suggested = SuggestedSites.asArray()
         let deleted = profile.prefs.arrayForKey(DefaultSuggestedSitesKey) as? [String] ?? []
         return suggested.filter({deleted.indexOf($0.url) == .None})
+    }
+
+    func longPress(longPressGestureRecognizer: UILongPressGestureRecognizer) {
+        if longPressGestureRecognizer.state == UIGestureRecognizerState.Began {
+            let touchPoint = longPressGestureRecognizer.locationInView(self.view)
+            if let indexPath = tableView.indexPathForRowAtPoint(touchPoint) {
+                if indexPath.section == 1 {
+                    presentContextMenu(history[indexPath.row])
+                }
+            }
+        }
+    }
+
+    private func presentContextMenu(site: Site) {
+        let contextMenu = BlurTableViewController()
+        contextMenu.profile = profile
+        contextMenu.site = site
+        contextMenu.modalPresentationStyle = .OverCurrentContext
+        contextMenu.modalTransitionStyle = .CrossDissolve
+        self.presentViewController(contextMenu, animated: true, completion: nil)
     }
 }
 
